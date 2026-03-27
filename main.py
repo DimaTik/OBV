@@ -8,7 +8,7 @@ import handlers
 import indicator
 
 
-def trade(ticker, side, amount, leverage = None):
+def trade(ticker, side, amount, leverage=None):
 	if 'USDC' in ticker:
 		balance = exchange.get_balance('USDC')
 		balance = f'{balance:.2f} USDC'
@@ -42,12 +42,10 @@ def main():
 			continue
 		df = pd.DataFrame(v, columns=['time', 'open', 'high', 'low', 'close', 'volume'])
 		indicators = ind.calculate_indicators(df)
-		dir = ind.check_signals(indicators)
-		if dir:
-			res[k] = dir
+		res[k] = ind.check_signals(indicators)
 	for k, v in res.items():
 		print(f'{k}: obv: {v[0]}, macd: {v[1]}, stoch: {v[2]}, sma: {v[3]}, vol: {v[4]}, '
-		      f'signal: {'buy' if sum(v) > 0 else 'sell'}')
+		      f'signal: {v[5]}')
 
 	threads = []
 	for token, signal in res.items():
@@ -57,8 +55,8 @@ def main():
 		else:
 			balance = exchange.get_balance('USDT')
 
-		side = 'buy' if sum(signal) > 0 else 'sell'
-		amount = order_settings['volume_percent']*balance/price if len([i for i in signal if i > 0]) == 5 \
+		side = signal[-1]
+		amount = order_settings['volume_percent'] * balance / price if len([i for i in signal[:-1] if i > 0]) == 5 \
 			else order_settings['volume_const']
 
 		if ':' in token:

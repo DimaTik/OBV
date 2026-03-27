@@ -56,9 +56,9 @@ class Exchange:
 
 	@handlers.retry
 	def get_last_order(self, ticker):
-		timestamp = (int(time.time()) - 14700) * 1000 # 4 часа 5 минут (из-за максимального TF 4h)
+		timestamp = (int(time.time()) - 14700) * 1000  # 4 часа 5 минут (из-за максимального TF 4h)
 		orders = self.cex.fetch_closed_orders(ticker, since=timestamp)
-		if not orders or not orders['amount']:
+		if not orders or not orders[-1]['amount']:
 			return None
 		return [orders[-1]['side'], orders[-1]['filled']]
 
@@ -68,10 +68,10 @@ class Exchange:
 		price = self.get_price(ticker)
 		for i in range(-1, 2):
 			orders.append(self.cex.create_order(symbol=ticker,
-			                      type='limit',
-			                      side=side,
-			                      amount=amount,
-			                      price=price * (1 - i*2 / 1000)))  # 1000 - десятая процента
+			                                    type='limit',
+			                                    side=side,
+			                                    amount=amount,
+			                                    price=price * (1 - i * 2 / 1000)))  # 1000 - десятая процента
 		return [i['id'] for i in orders]
 
 	@handlers.retry

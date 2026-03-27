@@ -3,7 +3,7 @@ import functools
 import pathlib
 import time
 from asyncio import CancelledError
-from contextlib import asynccontextmanager, contextmanager
+from contextlib import contextmanager
 from json import JSONDecodeError
 from typing import Callable
 
@@ -52,13 +52,14 @@ class ConfigHandler:
 
 	def get_order_settings(self):
 		return {"volume_const": float(self.config['ORDER']['volume_const']),
-		        "volume_percent": float(self.config['ORDER']['volume_percent'])/100,
-				"leverage": int(self.config['ORDER']['leverage'])}
+		        "volume_percent": float(self.config['ORDER']['volume_percent']) / 100,
+		        "leverage": int(self.config['ORDER']['leverage'])}
 
 
 class ApiCallResult:
 	def __init__(self):
 		self.error = None
+
 
 @contextmanager
 def safe(fn):
@@ -66,7 +67,7 @@ def safe(fn):
 	try:
 		yield api_result
 	except (
-	ClientError, JSONDecodeError, RequestTimeout, DNSError, InvalidNonce, NetworkError, CancelledError) as e:
+			ClientError, JSONDecodeError, RequestTimeout, DNSError, InvalidNonce, NetworkError, CancelledError) as e:
 		print(e.__class__.__name__, e, fn)
 		api_result.error = e.args
 		time.sleep(3)
@@ -78,6 +79,7 @@ def safe(fn):
 		print(e.__class__.__name__, e, fn)
 		api_result.error = e.args
 		time.sleep(3)
+
 
 def retry(fn: Callable) -> Callable:
 	@functools.wraps(fn)

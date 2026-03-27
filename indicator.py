@@ -3,7 +3,8 @@ import pandas_ta as ta
 
 class ObvMacd:
 	def __init__(self, obv_length: int, macd_fast: int, macd_slow: int, macd_signal: int, stoch_k: int, stoch_d: int,
-	             stock_smooth: int, sma_lenght: int, macd_w: float, stoch_w: float, obv_w: float, ma_w: float, vol_w: float):
+	             stock_smooth: int, sma_lenght: int, macd_w: float, stoch_w: float, obv_w: float, ma_w: float,
+	             vol_w: float):
 		self.obv_length = obv_length
 		self.macd_fast = macd_fast
 		self.macd_slow = macd_slow
@@ -40,12 +41,24 @@ class ObvMacd:
 	def crossover(self, c_val, c_sig, p_val, p_sig):
 		return 1 if c_val > c_sig and p_val <= p_sig else -1
 
+	def crossunder(self, c_val, c_sig, p_val, p_sig):
+		return 1 if c_val < c_sig and p_val >= p_sig else -1
+
 	def check_signals(self, df):
 		curr = df.iloc[-1]
 		prev = df.iloc[-2]
-		obv = self.crossover(curr['obv'], curr['obv_ema'], prev['obv'], prev['obv_ema'])
-		macd = self.crossover(curr['macd'], curr['macd_signal'], prev['macd'], prev['macd_signal'])
-		stoch = self.crossover(curr['stoch_k'], curr['stoch_d'], prev['stoch_k'], prev['stoch_d'])
-		trend = curr['close'] > curr[f'sma_{self.sma_lenght}']
-		return [macd*self.macd_w, stoch*self.stoch_w, obv*self.obv_w, float(trend*self.ma_w),
-		        float(prev['candle_type']*self.vol_w)]
+		obv_over = self.crossover(curr['obv'], curr['obv_ema'], prev['obv'], prev['obv_ema'])
+		macd_over = self.crossover(curr['macd'], curr['macd_signal'], prev['macd'], prev['macd_signal'])
+		stoch_over = self.crossover(curr['stoch_k'], curr['stoch_d'], prev['stoch_k'], prev['stoch_d'])
+		trend_over = curr['close'] > curr[f'sma_{self.sma_lenght}']
+		obv_under = self.crossunder(curr['obv'], curr['obv_ema'], prev['obv'], prev['obv_ema'])
+		macd_under = self.crossunder(curr['macd'], curr['macd_signal'], prev['macd'], prev['macd_signal'])
+		stoch_under = self.crossunder(curr['stoch_k'], curr['stoch_d'], prev['stoch_k'], prev['stoch_d'])
+		trend_under = curr['close'] < curr[f'sma_{self.sma_lenght}']
+
+		return max(
+			[macd_over * self.macd_w, stoch_over * self.stoch_w, obv_over * self.obv_w, float(trend_over * self.ma_w),
+			 float(prev['candle_type'] * self.vol_w), 'buy'],
+			[macd_under * self.macd_w, stoch_under * self.stoch_w, obv_under * self.obv_w,
+			 float(trend_under * self.ma_w), float(prev['candle_type'] * self.vol_w), 'sell'],
+			key=lambda x: sum(x[:-1]))
