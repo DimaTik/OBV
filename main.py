@@ -34,7 +34,7 @@ def trade(ticker, side, amount, leverage=None):
 
 def main():
 	print('Получаю свечи по активам')
-	candles = exchange.get_ohlcv(indicator_settings['tf'])
+	candles = exchange.get_ohlcv(indicator_settings['tf'], user_tickers)
 	res = {}
 	for k, v in candles.items():
 		if len(v) < 300:
@@ -93,6 +93,7 @@ if __name__ == '__main__':
 
 	config = handlers.ConfigHandler()
 	api_key, secret_key = config.get_api()
+	user_tickers = config.get_user_tickers()
 	indicator_settings = config.get_indicator_settings()
 	indicator_weights_settings = config.get_indicator_weights_settings()
 	order_settings = config.get_order_settings()
@@ -107,7 +108,6 @@ if __name__ == '__main__':
 	                        indicator_weights_settings['vol'])
 
 	print(f'Привет! Я запустился, жду новую свечу, на {indicator_settings['tf']} таймфрейме')
-	main()
 	while True:
 		now = time.time()
 		sleep_time = timeframe_to_shed[indicator_settings['tf']] - (now % timeframe_to_shed[indicator_settings['tf']])

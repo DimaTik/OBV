@@ -34,8 +34,7 @@ class Exchange:
 		return tickers
 
 	@handlers.retry
-	def get_ohlcv(self, timeframe) -> dict:
-		tickers = self.get_btc_tickers()
+	def get_ohlcv(self, timeframe, tickers) -> dict:
 		candles = {i: self.cex.fetch_ohlcv(i, timeframe, limit=300) for i in tickers}
 		return candles
 
@@ -71,7 +70,7 @@ class Exchange:
 			                                    type='limit',
 			                                    side=side,
 			                                    amount=amount,
-			                                    price=price * (1 - i * 2 / 1000)))  # 1000 - десятая процента
+			                                    price=price * (1 - i * 5 / 1000)))  # 1000 - десятая процента
 		return [i['id'] for i in orders]
 
 	@handlers.retry

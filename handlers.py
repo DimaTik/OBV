@@ -29,8 +29,11 @@ class ConfigHandler:
 				break
 
 	def get_api(self) -> tuple[str, str]:
-		return self.config[f'BYBIT']['api_public'].strip(), \
-			self.config[f'BYBIT']['api_secret'].strip()
+		return self.config['BYBIT']['api_public'].strip(), \
+			self.config['BYBIT']['api_secret'].strip()
+
+	def get_user_tickers(self):
+		return tuple([i.strip() for i in self.config['BYBIT']['tickers'].split(',')])
 
 	def get_indicator_settings(self) -> dict:
 		return {"tf": self.config['INDICATOR']['timeframe'],
