@@ -75,7 +75,6 @@ def safe(fn):
 		api_result.error = e.args
 		time.sleep(3)
 	except (InvalidOrder, ExchangeError, ExchangeNotAvailable) as e:
-		print(e.__class__.__name__, e, fn)
 		api_result.error = e.args
 		time.sleep(3)
 	except (ValueError, TimeoutError) as e:

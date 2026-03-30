@@ -1,0 +1,11 @@
+venv/
+.venv/
+.git/
+__pycache__/
+.idea/
+.vscode/
+*.pyc
+.env
+adresses.xlsx
+README.md
+/src/test.py
