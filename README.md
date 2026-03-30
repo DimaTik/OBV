@@ -36,12 +36,11 @@ EOF`
 10. `sudo systemctl status docker`
 
 #### Запуск Бота
-Скопируйте и вставьте в консоль по очереди
-1. `cd /`
-2. `git clone https://github.com/DimaTik/OBV.git`
-3. `cd OBV`
-4. `docker build -t bot .` - создание образа bot
-5. `docker run --name bot1 bot .` - запуск контейнера с именем bot1
+Скопируйте и вставьте в консоль по очереди`
+1. `git clone https://github.com/DimaTik/OBV.git`
+2. `cd OBV`
+3. `docker build -t bot .` - создание образа bot
+4. `docker run --name bot1 bot .` - запуск контейнера с именем bot1
 
 #### Просмотр логов
 `docker logs bot1`
