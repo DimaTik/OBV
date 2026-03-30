@@ -40,7 +40,7 @@ EOF`
 1. `git clone https://github.com/DimaTik/OBV.git`
 2. `cd OBV`
 3. `docker build -t bot .` - создание образа bot
-4. `docker run --name bot1 bot .` - запуск контейнера с именем bot1
+4. `docker run --name bot1 bot` - запуск контейнера с именем bot1
 
 #### Просмотр логов
 `docker logs bot1`
