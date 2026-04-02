@@ -8,7 +8,7 @@ import handlers
 import indicator
 
 
-def trade(ticker, side, amount, leverage=None):
+def trade(exchange, ticker, side, amount, leverage=None):
 	if 'USDC' in ticker:
 		balance = exchange.get_balance('USDC')
 		balance = f'{balance:.2f} USDC'
@@ -33,7 +33,23 @@ def trade(ticker, side, amount, leverage=None):
 
 
 def main():
-	print('Получаю свечи по активам')
+	config = handlers.ConfigHandler()
+	api_key, secret_key = config.get_api()
+	user_tickers = config.get_user_tickers()
+	indicator_settings = config.get_indicator_settings()
+	indicator_weights_settings = config.get_indicator_weights_settings()
+	order_settings = config.get_order_settings()
+	exchange = ex.Exchange(api_key, secret_key)
+
+	ind = indicator.ObvMacd(indicator_settings['obv_length'], indicator_settings['macd_fast'],
+	                        indicator_settings['macd_slow'], indicator_settings['macd_signal'],
+	                        indicator_settings['stoch_k'], indicator_settings['stoch_d'],
+	                        indicator_settings['stoch_smooth'], indicator_settings['sma_lenght'],
+	                        indicator_weights_settings['macd'], indicator_weights_settings['stochastic'],
+	                        indicator_weights_settings['obv'], indicator_weights_settings['ma'],
+	                        indicator_weights_settings['vol'])
+
+	print(f'Получаю свечи по активам на {indicator_settings['tf']} таймфрейме')
 	candles = exchange.get_ohlcv(indicator_settings['tf'], user_tickers)
 	res = {}
 	for k, v in candles.items():
@@ -62,17 +78,19 @@ def main():
 		if ':' in token:
 			pos = exchange.get_position(token)
 			if pos is None:
-				threads.append(threading.Thread(target=trade, args=(token, side, amount, order_settings['leverage'],)))
+				threads.append(threading.Thread(target=trade, args=(exchange, token, side, amount,
+				                                                    order_settings['leverage'],)))
 			elif side != pos[0]:
 				amount += pos[1]
-				threads.append(threading.Thread(target=trade, args=(token, side, amount, order_settings['leverage'],)))
+				threads.append(threading.Thread(target=trade, args=(exchange, token, side, amount,
+				                                                    order_settings['leverage'],)))
 		else:
 			order = exchange.get_last_order(token)
 			if order is None:
-				threads.append(threading.Thread(target=trade, args=(token, side, amount,)))
+				threads.append(threading.Thread(target=trade, args=(exchange, token, side, amount,)))
 			elif side != order[0]:
 				amount += order[1]
-				threads.append(threading.Thread(target=trade, args=(token, side, amount,)))
+				threads.append(threading.Thread(target=trade, args=(exchange, token, side, amount,)))
 
 	if threads:
 		print('Совершаю сделки')
@@ -86,6 +104,9 @@ def main():
 
 
 if __name__ == '__main__':
+	config = handlers.ConfigHandler()
+	indicator_settings = config.get_indicator_settings()
+
 	timeframe_to_shed = {
 		'5m': 300,
 		'15m': 900,
@@ -93,22 +114,6 @@ if __name__ == '__main__':
 		'1h': 3600,
 		'4h': 14400
 	}
-
-	config = handlers.ConfigHandler()
-	api_key, secret_key = config.get_api()
-	user_tickers = config.get_user_tickers()
-	indicator_settings = config.get_indicator_settings()
-	indicator_weights_settings = config.get_indicator_weights_settings()
-	order_settings = config.get_order_settings()
-	exchange = ex.Exchange(api_key, secret_key)
-
-	ind = indicator.ObvMacd(indicator_settings['obv_length'], indicator_settings['macd_fast'],
-	                        indicator_settings['macd_slow'], indicator_settings['macd_signal'],
-	                        indicator_settings['stoch_k'], indicator_settings['stoch_d'],
-	                        indicator_settings['stoch_smooth'], indicator_settings['sma_lenght'],
-	                        indicator_weights_settings['macd'], indicator_weights_settings['stochastic'],
-	                        indicator_weights_settings['obv'], indicator_weights_settings['ma'],
-	                        indicator_weights_settings['vol'])
 
 	print(f'Привет! Я запустился, жду новую свечу, на {indicator_settings['tf']} таймфрейме')
 	while True:
