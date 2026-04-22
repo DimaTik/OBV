@@ -12,6 +12,8 @@ from aiohttp import ClientError
 from ccxt.base.errors import RequestTimeout, InvalidNonce, InvalidOrder, ExchangeError, ExchangeNotAvailable, \
 	NetworkError
 
+from log import logger
+
 
 class ConfigHandler:
 	def __init__(self):
@@ -28,9 +30,10 @@ class ConfigHandler:
 			else:
 				break
 
-	def get_api(self) -> tuple[str, str]:
-		return self.config['BYBIT']['api_public'].strip(), \
-			self.config['BYBIT']['api_secret'].strip()
+	def get_exchange_settings(self) -> dict:
+		return {'api_public': self.config['BYBIT']['api_public'].strip(),
+		        'api_secret': self.config['BYBIT']['api_secret'].strip(),
+		        'mode': False if self.config['BYBIT']['mode'] == 'DEMO' else True}
 
 	def get_user_tickers(self):
 		return tuple([i.strip() for i in self.config['BYBIT']['tickers'].split(',')])
@@ -56,7 +59,21 @@ class ConfigHandler:
 	def get_order_settings(self):
 		return {"volume_const": float(self.config['ORDER']['volume_const']),
 		        "volume_percent": float(self.config['ORDER']['volume_percent']) / 100,
-		        "leverage": int(self.config['ORDER']['leverage'])}
+		        "leverage": int(self.config['ORDER']['leverage']),
+		        "grid_step_percent": float(self.config['ORDER']['grid_step_percent']) / 100, }
+
+	def get_risk_management(self):
+		return {"TP": float(self.config['RISK']['TP']) / 100,
+		        "SL": float(self.config['RISK']['SL']) / 100,
+		        "simple_TP_percent": float(self.config['RISK']['simple_TP_percent']) / 100,
+		        "trailing_trigger_percent": float(self.config['RISK']['trailing_trigger_percent']) / 100,
+		        "trailing_stop_percent": float(self.config['RISK']['trailing_stop_percent']) / 100}
+
+	def get_proxy(self):
+		return self.config['PROXY']['http']
+
+	def get_control_word(self):
+		return self.config['OTHER']['control_word']
 
 
 class ApiCallResult:
@@ -71,15 +88,15 @@ def safe(fn):
 		yield api_result
 	except (
 			ClientError, JSONDecodeError, RequestTimeout, DNSError, InvalidNonce, NetworkError, CancelledError) as e:
-		print(e.__class__.__name__, e, fn)
+		logger.info(f'{e.__class__.__name__} {e} {fn}')
 		api_result.error = e.args
 		time.sleep(3)
 	except (InvalidOrder, ExchangeError, ExchangeNotAvailable) as e:
-		print(e.__class__.__name__, e, fn)
+		logger.info(f'{e.__class__.__name__} {e} {fn}')
 		api_result.error = e.args
 		time.sleep(3)
 	except (ValueError, TimeoutError) as e:
-		print(e.__class__.__name__, e, fn)
+		logger.info(f'{e.__class__.__name__} {e} {fn}')
 		api_result.error = e.args
 		time.sleep(3)
 
