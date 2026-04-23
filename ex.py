@@ -33,7 +33,8 @@ class Exchange:
 				'https': self.proxy
 			}
 		self.cex = ccxt.bybit(self.api_params)
-		self.cex.enable_demo_trading(True)
+		if self.mode:
+			self.cex.enable_demo_trading(True)
 
 		self.session_bybit = HTTP(
 			testnet=False,
