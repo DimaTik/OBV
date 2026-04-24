@@ -5,14 +5,13 @@ import pandas as pd
 import requests
 from python_ntfy import NtfyClient
 
-from log import logger
 import ex
 import handlers
 import indicator
+from log import logger
 
 
 def trade(exchange, ticker, side, amount, leverage=None):
-
 	if 'USDC' in ticker:
 		balance = exchange.get_balance('USDC')
 		balance = f'{balance:.2f} USDC'
@@ -47,7 +46,7 @@ def trade(exchange, ticker, side, amount, leverage=None):
 		balance = f'{balance:.2f} USDT'
 
 	logger.info(f'Сделка по {ticker} совершена. Баланс: {balance}')
-	client.send(f'Начал сделку по {ticker} в направлении {side}, баланс = {balance}')
+	client.send(f'Сделка по {ticker} совершена. Баланс: {balance}')
 
 
 def main():
@@ -96,7 +95,7 @@ def main():
 		res[k] = ind.check_signals(indicators)
 	for k, v in res.items():
 		logger.info(f'{k}: obv: {v[0]}, macd: {v[1]}, stoch: {v[2]}, sma: {v[3]}, vol: {v[4]}, '
-		      f'signal: {v[5]}')
+		            f'signal: {v[5]}')
 
 	threads = []
 	for token, signal in res.items():
@@ -110,7 +109,7 @@ def main():
 		amount = order_settings['volume_percent'] * balance / price if len([i for i in signal[:-1] if i > 0]) == 5 \
 			else order_settings['volume_const']
 
-		if ':' in token:
+		if ':' in token or '-' in token or token == 'BTCPERP':
 			pos = exchange.get_position(token)
 			if pos is None:
 				threads.append(threading.Thread(target=trade, args=(exchange, token, side, amount,
@@ -141,7 +140,6 @@ if __name__ == '__main__':
 	control_word = config.get_control_word()
 	indicator_settings = config.get_indicator_settings()
 
-
 	timeframe_to_shed = {
 		'5m': 300,
 		'15m': 900,
@@ -152,10 +150,12 @@ if __name__ == '__main__':
 	client = NtfyClient(topic="eduard_obv_1234")
 
 	logger.info(f'Привет, {control_word}! Я запустился, жду новую свечу, на {indicator_settings['tf']} таймфрейме')
+	main()
 	while True:
 		try:
 			now = time.time()
-			sleep_time = timeframe_to_shed[indicator_settings['tf']] - (now % timeframe_to_shed[indicator_settings['tf']])
+			sleep_time = timeframe_to_shed[indicator_settings['tf']] - (
+						now % timeframe_to_shed[indicator_settings['tf']])
 			time.sleep(sleep_time)
 			main()
 		except (KeyboardInterrupt, SystemExit, Exception):

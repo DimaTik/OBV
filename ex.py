@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 import ccxt
 from ccxt.base.errors import BadRequest
 from pybit.unified_trading import HTTP
+from unicodedata import category
 
 import handlers
 
@@ -52,13 +53,6 @@ class Exchange:
 		return self.cex.fetch_ticker(ticker)['last']
 
 	@handlers.retry
-	def get_btc_tickers(self):
-		tickers = self.cex.fetch_markets()
-		tickers = [i['symbol'] for i in tickers if (i['symbol'][:8] == 'BTC/USDT' and i['symbol'][-1] not in ('P', 'C'))
-		           or i['symbol'][:8] == 'BTC/USDC']
-		return tickers
-
-	@handlers.retry
 	def get_ohlcv(self, timeframe, tickers) -> dict:
 		candles = {i: self.cex.fetch_ohlcv(i, timeframe, limit=300) for i in tickers}
 		return candles
@@ -87,6 +81,8 @@ class Exchange:
 		return [orders[-1]['side'], orders[-1]['filled']]
 
 	def _to_pybit_market(self, symbol: str):
+		if '/' not in symbol or '-' in symbol:
+			return symbol, 'linear'
 		if ':' in symbol:
 			base_quote, settle = symbol.split(':', 1)
 			base, quote = base_quote.split('/')
@@ -119,7 +115,6 @@ class Exchange:
 					'orderType': 'Limit',
 					'qty': str(order_qty),
 					'price': str(limit_price),
-					# 'timeInForce': 'GTC',
 				}
 			)
 		response = self.session_bybit.place_batch_order(category=category, request=batch_orders)
